@@ -1,0 +1,34 @@
+services:
+- name: mongo
+  dockerfile: mongo/Dockerfile
+  env:
+    - MONGODB_PORT: 27017
+  ports:
+    - 27017
+
+- name: chatgpt_telegram_bot
+  dockerfile: Dockerfile
+  env:
+    - MONGODB_PORT: 27017
+  depends_on:
+    - mongo
+  startCommand: python3 bot/bot.py
+
+- name: mongo_express
+  dockerfile: mongo_express/Dockerfile
+  env:
+    - MONGODB_PORT: 27017
+    - MONGO_EXPRESS_PORT: 8081
+    - MONGO_EXPRESS_USERNAME: username
+    - MONGO_EXPRESS_PASSWORD: password
+    - ME_CONFIG_MONGODB_SERVER: mongo
+    - ME_CONFIG_MONGODB_PORT: ${MONGODB_PORT:-27017}
+    - ME_CONFIG_MONGODB_ENABLE_ADMIN: false
+    - ME_CONFIG_MONGODB_AUTH_DATABASE: chatgpt_telegram_bot
+    - ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME:-username}
+    - ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-password}
+
+  ports:
+    - 8081
+  depends_on:
+    - mongo
